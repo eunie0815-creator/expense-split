@@ -4,7 +4,7 @@ A simple expense-splitting app for a friend group traveling across multiple
 currencies. Plain HTML/CSS/JS (no build step, no framework), a Supabase
 Postgres backend, and Frankfurter for currency conversion.
 
-Live at: _(add your GitHub Pages URL here after deploying)_
+Live at: https://eunie0815-creator.github.io/expense-split/
 
 ## How it works
 
