@@ -1,0 +1,181 @@
+/* Theme tokens copied from the run club site (Documents/runnning/src/app/globals.css),
+   translated out of Tailwind into plain CSS variables + classes so this
+   project has no build step. Change a value here and it updates everywhere. */
+
+:root {
+  --sand: #faf3e6;
+  --surface: #fffdf8;
+  --ink: #1c1b17;
+  --ink-secondary: #6b6355;
+  --ink-muted: #9b9384;
+  --line: #e7ddc9;
+  --ocean: #0e6e6a;
+  --ocean-strong: #0a5551;
+  --ocean-tint: #dcefec;
+  --ocean-deep: #0a4f4b;
+  --sunset: #e8622c;
+  --sunset-strong: #cc4e1c;
+  --sunset-tint: #fbe2d3;
+  --mustard: #eda100;
+  --mustard-tint: #fbe9c6;
+
+  --font-sans: "Geist", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+  --font-display: "Anton", var(--font-sans);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --sand: #0d2726;
+    --surface: #123634;
+    --ink: #f6f1e4;
+    --ink-secondary: #b9c9c4;
+    --ink-muted: #83968f;
+    --line: #1e4644;
+    --ocean: #4bc2b8;
+    --ocean-strong: #7fd8cf;
+    --ocean-tint: #163e3c;
+    --sunset: #ff8552;
+    --sunset-strong: #ffa172;
+    --sunset-tint: #3a2318;
+    --mustard: #f4b93f;
+    --mustard-tint: #3a2c0f;
+  }
+}
+
+/* Manual override via the theme toggle, wins regardless of system preference. */
+:root[data-theme="dark"] {
+  --sand: #0d2726;
+  --surface: #123634;
+  --ink: #f6f1e4;
+  --ink-secondary: #b9c9c4;
+  --ink-muted: #83968f;
+  --line: #1e4644;
+  --ocean: #4bc2b8;
+  --ocean-strong: #7fd8cf;
+  --ocean-tint: #163e3c;
+  --sunset: #ff8552;
+  --sunset-strong: #ffa172;
+  --sunset-tint: #3a2318;
+  --mustard: #f4b93f;
+  --mustard-tint: #3a2c0f;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--sand);
+  color: var(--ink);
+  font-family: var(--font-sans);
+}
+
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  padding: 1rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  border-radius: 999px;
+  padding: 0.65rem 1.25rem;  /* taller than the run club site: keeps a 44px+ tap target on phones */
+  min-height: 44px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.1s ease, opacity 0.15s ease;
+  white-space: nowrap;
+  font-family: inherit;
+}
+.btn:active {
+  transform: scale(0.97);
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.btn-primary {
+  background: var(--sunset);
+  color: white;
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--sunset-strong);
+}
+
+.btn-secondary {
+  background: var(--ocean);
+  color: white;
+}
+.btn-secondary:hover:not(:disabled) {
+  background: var(--ocean-strong);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--ink-secondary);
+  border: 1px solid var(--line);
+}
+.btn-ghost:hover:not(:disabled) {
+  background: var(--ocean-tint);
+  color: var(--ink);
+}
+
+.input-field {
+  border-radius: 0.6rem;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  padding: 0.6rem 0.7rem;
+  color: var(--ink);
+  font-size: 1rem; /* 16px avoids iOS Safari auto-zoom on focus */
+  font-family: inherit;
+  width: 100%;
+}
+.input-field:focus {
+  outline: 2px solid var(--ocean);
+  outline-offset: 1px;
+}
+
+label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--ink-muted);
+  margin-bottom: 0.3rem;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.125rem 0.55rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.badge-ocean {
+  background: var(--ocean-tint);
+  color: var(--ocean-strong);
+}
+.badge-sunset {
+  background: var(--sunset-tint);
+  color: var(--sunset-strong);
+}
