@@ -62,6 +62,16 @@ export async function getGroup(groupId, token) {
   return rows[0] ?? null;
 }
 
+export async function updateGroupName(groupId, token, name) {
+  const [row] = await request(`/groups?id=eq.${groupId}`, {
+    method: "PATCH",
+    token,
+    prefer: "return=representation",
+    body: { name },
+  });
+  return row;
+}
+
 // --- members ---
 
 export async function listMembers(groupId, token) {
@@ -74,6 +84,16 @@ export async function addMember(groupId, token, name) {
     token,
     prefer: "return=representation",
     body: { group_id: groupId, name },
+  });
+  return row;
+}
+
+export async function updateMemberName(memberId, token, name) {
+  const [row] = await request(`/members?id=eq.${memberId}`, {
+    method: "PATCH",
+    token,
+    prefer: "return=representation",
+    body: { name },
   });
   return row;
 }

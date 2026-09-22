@@ -1,8 +1,10 @@
 import {
   getGroup,
   unlockGroup,
+  updateGroupName,
   listMembers,
   addMember,
+  updateMemberName,
   deleteMember,
   listExpenses,
   listExpenseShares,
@@ -106,14 +108,23 @@ function renderGroupPage(mountEl, group, members, expenses, shares) {
       <a href="#/" class="muted">&larr; Your groups</a>
 
       <div class="row-between">
-        <div>
-          <h1 class="font-display" style="font-size: 1.5rem; margin: 0; color: var(--ocean);">
-            ${escapeHtml(group.name)}
-          </h1>
-          <div class="muted">base currency ${escapeHtml(group.baseCurrency)}</div>
+        <div id="group-name-display" class="row" style="align-items: baseline; gap: 0.5rem;">
+          <div>
+            <h1 class="font-display" style="font-size: 1.5rem; margin: 0; color: var(--ocean);" id="group-name-text">
+              ${escapeHtml(group.name)}
+            </h1>
+            <div class="muted">base currency ${escapeHtml(group.baseCurrency)}</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="edit-group-name-btn">Edit</button>
         </div>
         <a href="#/g/${group.id}/add" class="btn btn-primary">+ Add</a>
       </div>
+      <div id="group-name-edit" class="row" hidden>
+        <input class="input-field" id="group-name-input" value="${escapeHtml(group.name)}" />
+        <button class="btn btn-primary btn-sm" id="save-group-name-btn">Save</button>
+        <button class="btn btn-ghost btn-sm" id="cancel-group-name-btn">Cancel</button>
+      </div>
+      <p id="group-name-error" class="form-error"></p>
 
       <div class="card stack-sm">
         <strong>Members</strong>
@@ -143,8 +154,61 @@ function renderGroupPage(mountEl, group, members, expenses, shares) {
     </div>
   `;
 
+  wireGroupName(mountEl, group);
   wireMemberList(mountEl, group, members);
   wireExpenseList(mountEl, group);
+}
+
+function wireGroupName(mountEl, group) {
+  const displayEl = mountEl.querySelector("#group-name-display");
+  const editEl = mountEl.querySelector("#group-name-edit");
+  const input = mountEl.querySelector("#group-name-input");
+  const errorEl = mountEl.querySelector("#group-name-error");
+  const saveBtn = mountEl.querySelector("#save-group-name-btn");
+
+  mountEl.querySelector("#edit-group-name-btn").addEventListener("click", () => {
+    errorEl.textContent = "";
+    displayEl.hidden = true;
+    editEl.hidden = false;
+    input.value = group.name;
+    input.focus();
+    input.select();
+  });
+
+  const cancel = () => {
+    errorEl.textContent = "";
+    editEl.hidden = true;
+    displayEl.hidden = false;
+  };
+
+  mountEl.querySelector("#cancel-group-name-btn").addEventListener("click", cancel);
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") save();
+    if (e.key === "Escape") cancel();
+  });
+
+  const save = async () => {
+    const name = input.value.trim();
+    errorEl.textContent = "";
+    if (!name) return;
+    if (name === group.name) {
+      cancel();
+      return;
+    }
+
+    saveBtn.disabled = true;
+    try {
+      await updateGroupName(group.id, group.token, name);
+      saveGroup({ id: group.id, name, baseCurrency: group.baseCurrency, token: group.token });
+      renderGroup(mountEl, { id: group.id });
+    } catch (err) {
+      console.error(err);
+      errorEl.textContent = "Couldn't rename the group. Try again.";
+      saveBtn.disabled = false;
+    }
+  };
+
+  saveBtn.addEventListener("click", save);
 }
 
 function balancesHtml(balances, baseCurrency) {
@@ -224,9 +288,20 @@ function membersHtml(members) {
 
 function memberRowHtml(m) {
   return `
-    <div class="member-row">
+    <div class="member-row" data-member-row="${m.id}">
       <span class="badge badge-ocean">${escapeHtml(m.name)}</span>
+      <button class="btn btn-ghost btn-sm" data-edit="${m.id}">Edit</button>
       <button class="btn btn-ghost btn-sm" data-remove="${m.id}">Remove</button>
+    </div>
+  `;
+}
+
+function memberEditRowHtml(m) {
+  return `
+    <div class="member-row" data-member-row="${m.id}">
+      <input class="input-field" data-member-name-input value="${escapeHtml(m.name)}" style="flex: 1;" />
+      <button class="btn btn-primary btn-sm" data-save-member="${m.id}">Save</button>
+      <button class="btn btn-ghost btn-sm" data-cancel-member="${m.id}">Cancel</button>
     </div>
   `;
 }
@@ -271,6 +346,53 @@ function wireMemberList(mountEl, group, members) {
   // actually deletes. Avoids a native confirm() popup, which looks out
   // of place next to the rest of the theme.
   listEl.addEventListener("click", async (e) => {
+    const editBtn = e.target.closest("[data-edit]");
+    if (editBtn) {
+      errorEl.textContent = "";
+      const memberId = editBtn.dataset.edit;
+      const member = members.find((m) => m.id === memberId);
+      const row = listEl.querySelector(`[data-member-row="${memberId}"]`);
+      row.outerHTML = memberEditRowHtml(member);
+      const rowEl = listEl.querySelector(`[data-member-row="${memberId}"]`);
+      const input = rowEl.querySelector("[data-member-name-input]");
+      input.focus();
+      input.select();
+      return;
+    }
+
+    const cancelBtn = e.target.closest("[data-cancel-member]");
+    if (cancelBtn) {
+      errorEl.textContent = "";
+      renderList();
+      return;
+    }
+
+    const saveBtn = e.target.closest("[data-save-member]");
+    if (saveBtn) {
+      errorEl.textContent = "";
+      const memberId = saveBtn.dataset.saveMember;
+      const member = members.find((m) => m.id === memberId);
+      const rowEl = listEl.querySelector(`[data-member-row="${memberId}"]`);
+      const input = rowEl.querySelector("[data-member-name-input]");
+      const name = input.value.trim();
+      if (!name) return;
+      if (name === member.name) {
+        renderList();
+        return;
+      }
+
+      saveBtn.disabled = true;
+      try {
+        await updateMemberName(memberId, group.token, name);
+        renderGroup(mountEl, { id: group.id });
+      } catch (err) {
+        console.error(err);
+        errorEl.textContent = "Couldn't rename that member (maybe that name is already used?).";
+        saveBtn.disabled = false;
+      }
+      return;
+    }
+
     const btn = e.target.closest("[data-remove]");
     if (!btn) return;
     errorEl.textContent = "";
@@ -294,6 +416,16 @@ function wireMemberList(mountEl, group, members) {
       btn.disabled = false;
       btn.textContent = "Remove";
       btn.dataset.armed = "false";
+    }
+  });
+
+  listEl.addEventListener("keydown", (e) => {
+    if (!e.target.matches("[data-member-name-input]")) return;
+    if (e.key === "Enter") {
+      e.target.closest(".member-row").querySelector("[data-save-member]").click();
+    }
+    if (e.key === "Escape") {
+      renderList();
     }
   });
 }

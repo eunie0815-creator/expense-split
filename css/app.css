@@ -1,5 +1,11 @@
 /* Layout and components specific to this app (not part of the shared theme). */
 
+/* Without this, [hidden] loses to any class on the same element that sets
+   its own `display` (e.g. .row) -- same specificity, author CSS wins. */
+[hidden] {
+  display: none !important;
+}
+
 .app-header {
   background: var(--ocean-deep, var(--ocean-strong));
   color: white;
