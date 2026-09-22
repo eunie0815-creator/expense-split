@@ -117,6 +117,24 @@ main.container {
   min-height: auto;
 }
 
+.icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  line-height: 1;
+  padding: 0.3rem;
+  border-radius: 50%;
+  color: var(--ink-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.icon-btn:hover {
+  background: var(--ocean-tint);
+  color: var(--ocean-strong);
+}
+
 .expense-row {
   padding-bottom: 0.6rem;
   border-bottom: 1px solid var(--line);

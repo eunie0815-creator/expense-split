@@ -109,14 +109,12 @@ function renderGroupPage(mountEl, group, members, expenses, shares) {
       <a href="#/" class="muted">&larr; Your groups</a>
 
       <div class="row-between">
-        <div id="group-name-display" class="row" style="align-items: baseline; gap: 0.5rem;">
-          <div>
-            <h1 class="font-display" style="font-size: 1.5rem; margin: 0; color: var(--ocean);" id="group-name-text">
-              ${escapeHtml(group.name)}
-            </h1>
-            <div class="muted">base currency ${escapeHtml(group.baseCurrency)}</div>
-          </div>
-          <button class="btn btn-ghost btn-sm" id="edit-group-name-btn">Edit</button>
+        <div id="group-name-display">
+          <h1 class="font-display row" style="font-size: 1.5rem; margin: 0; color: var(--ocean); gap: 0.35rem;" id="group-name-text">
+            ${escapeHtml(group.name)}
+            <button class="icon-btn" id="edit-group-name-btn" aria-label="Edit group name" title="Edit group name">&#9998;</button>
+          </h1>
+          <div class="muted">base currency ${escapeHtml(group.baseCurrency)}</div>
         </div>
         <a href="#/g/${group.id}/add" class="btn btn-primary">+ Add</a>
       </div>
@@ -304,8 +302,10 @@ function memberRowHtml(m) {
   return `
     <div class="member-row" data-member-row="${m.id}">
       <span class="badge${m.color ? "" : " badge-ocean"}"${badgeStyle}>${escapeHtml(m.name)}</span>
-      <button class="btn btn-ghost btn-sm" data-edit="${m.id}">Edit</button>
-      <button class="btn btn-ghost btn-sm" data-remove="${m.id}">Remove</button>
+      <div class="row" style="gap: 0.4rem;">
+        <button class="btn btn-ghost btn-sm" data-edit="${m.id}">Edit</button>
+        <button class="btn btn-ghost btn-sm" data-remove="${m.id}">Remove</button>
+      </div>
     </div>
   `;
 }
