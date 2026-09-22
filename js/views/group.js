@@ -8,7 +8,6 @@ import {
   deleteMember,
   listExpenses,
   listExpenseShares,
-  deleteExpense,
 } from "../db.js";
 import {
   getSavedGroup,
@@ -21,6 +20,9 @@ import { escapeHtml } from "../util.js";
 import { formatMoney } from "../money.js";
 import { computeBalances, settleUp, computePairwiseDebts } from "../balances.js";
 import { MEMBER_COLORS, nextAvailableColor, memberDotHtml, contrastTextColor } from "../colors.js";
+import { expensesHtml, wireExpenseList } from "./expense-list.js";
+
+const RECENT_EXPENSES_LIMIT = 4;
 
 export async function renderGroup(mountEl, { id }) {
   const saved = getSavedGroup(id);
@@ -166,15 +168,20 @@ function renderGroupPage(mountEl, group, members, expenses, shares) {
 
       <div class="card stack-sm">
         <strong>Expenses</strong>
-        <div id="expense-list" class="stack-sm">${expensesHtml(members, expenses, group.id)}</div>
+        <div id="expense-list" class="stack-sm">${expensesHtml(members, expenses.slice(0, RECENT_EXPENSES_LIMIT), group.id)}</div>
         <p id="expense-error" class="form-error"></p>
+        ${
+          expenses.length > RECENT_EXPENSES_LIMIT
+            ? `<a class="btn btn-ghost btn-sm" href="#/g/${group.id}/expenses" target="_blank" rel="noopener" style="display: block; text-align: center; margin-top: 0.5rem;">Show all expenses</a>`
+            : ""
+        }
       </div>
     </div>
   `;
 
   wireGroupName(mountEl, group);
   wireMemberList(mountEl, group, members);
-  wireExpenseList(mountEl, group);
+  wireExpenseList(mountEl, group, () => renderGroup(mountEl, { id: group.id }));
   wireSettleUpToggle(mountEl, group, members, expenses, shares);
 }
 
@@ -284,40 +291,6 @@ function settleUpHtml(payments, baseCurrency, members) {
       `
     )
     .join("");
-}
-
-function expensesHtml(members, expenses, groupId) {
-  if (!expenses.length) {
-    return '<p class="muted">No expenses yet.</p>';
-  }
-  const memberById = new Map(members.map((m) => [m.id, m]));
-  return expenses.map((e) => expenseRowHtml(e, memberById, groupId)).join("");
-}
-
-function expenseRowHtml(e, memberById, groupId) {
-  const payer = memberById.get(e.paid_by);
-  const badgeClass = e.kind === "payment" ? "badge-ocean" : "badge-sunset";
-  const kindLabel = e.kind === "payment" ? "Payment" : "Expense";
-  return `
-    <div class="expense-row" data-expense-id="${e.id}">
-      <div class="row-between">
-        <div>
-          <strong>${escapeHtml(e.title)}</strong>
-          <div class="muted">
-            ${memberDotHtml(payer?.color)}${escapeHtml(payer?.name ?? "Unknown")} paid &middot; ${e.spent_on}
-          </div>
-        </div>
-        <div style="text-align: right;">
-          <div>${formatMoney(Number(e.amount), e.currency)}</div>
-          <span class="badge ${badgeClass}">${kindLabel}</span>
-        </div>
-      </div>
-      <div class="row" style="justify-content: flex-end; margin-top: 0.4rem; gap: 0.4rem;">
-        <a class="icon-btn" href="#/g/${groupId}/edit/${e.id}" aria-label="Edit expense" title="Edit">&#9998;</a>
-        <button class="icon-btn icon-btn-danger" data-delete-expense="${e.id}" aria-label="Delete expense" title="Delete">&times;</button>
-      </div>
-    </div>
-  `;
 }
 
 function membersHtml(members) {
@@ -531,42 +504,6 @@ function wireMemberList(mountEl, group, members) {
     }
     if (e.key === "Escape") {
       renderList();
-    }
-  });
-}
-
-function wireExpenseList(mountEl, group) {
-  const listEl = mountEl.querySelector("#expense-list");
-  const errorEl = mountEl.querySelector("#expense-error");
-
-  // Same two-step confirm pattern as removing a member. Deleting an
-  // expense changes every balance and settle-up suggestion, so on
-  // success we just reload the whole group view rather than patching
-  // numbers in place.
-  listEl.addEventListener("click", async (e) => {
-    const btn = e.target.closest("[data-delete-expense]");
-    if (!btn) return;
-    errorEl.textContent = "";
-
-    if (btn.dataset.armed !== "true") {
-      btn.dataset.armed = "true";
-      btn.classList.add("armed");
-      btn.textContent = "Confirm?";
-      return;
-    }
-
-    const expenseId = btn.dataset.deleteExpense;
-    btn.disabled = true;
-    try {
-      await deleteExpense(expenseId, group.token);
-      renderGroup(mountEl, { id: group.id });
-    } catch (err) {
-      console.error(err);
-      errorEl.textContent = "Couldn't delete that expense. Try again.";
-      btn.disabled = false;
-      btn.classList.remove("armed");
-      btn.textContent = "×";
-      btn.dataset.armed = "false";
     }
   });
 }
