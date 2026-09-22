@@ -20,7 +20,7 @@
   --mustard-tint: #fbe9c6;
 
   --font-sans: "Geist", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
-  --font-display: "Anton", var(--font-sans);
+  --font-display: "Big Shoulders Display", var(--font-sans);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -73,6 +73,7 @@ body {
 
 .font-display {
   font-family: var(--font-display);
+  font-weight: 800;
   letter-spacing: 0.01em;
   text-transform: uppercase;
 }
