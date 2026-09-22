@@ -56,7 +56,13 @@ export function settleUp(balances) {
     const amount = roundToCents(Math.min(creditor.balance, debtor.balance));
 
     if (amount > 0) {
-      payments.push({ from: debtor.name, to: creditor.name, amount });
+      payments.push({
+        from: debtor.name,
+        to: creditor.name,
+        fromId: debtor.id,
+        toId: creditor.id,
+        amount,
+      });
     }
 
     creditor.balance = roundToCents(creditor.balance - amount);

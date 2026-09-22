@@ -14,6 +14,7 @@ import { splitEqually, sumAmounts, roundToCents } from "../money.js";
 import { getSavedGroup } from "../storage.js";
 import { escapeHtml } from "../util.js";
 import { CURRENCIES } from "../currencies.js";
+import { memberDotHtml } from "../colors.js";
 
 export async function renderAddExpense(mountEl, { id }) {
   return renderExpenseForm(mountEl, { id, expenseId: null });
@@ -112,13 +113,27 @@ function buildInitialState(groupId, token, group, members, existing, existingSha
   return state;
 }
 
-function formHtml(group, members, state) {
-  const memberOptions = members
+function memberOptionsHtml(members, selectedId) {
+  return members
     .map(
       (m) =>
-        `<option value="${m.id}"${m.id === state.initial.paidBy ? " selected" : ""}>${escapeHtml(m.name)}</option>`
+        `<option value="${m.id}" style="background:${m.color ? "#" + m.color : "transparent"};"${
+          m.id === selectedId ? " selected" : ""
+        }>${escapeHtml(m.name)}</option>`
     )
     .join("");
+}
+
+function memberById(members, id) {
+  return members.find((m) => m.id === id);
+}
+
+function dotColor(hex) {
+  return hex ? `#${hex}` : "transparent";
+}
+
+function formHtml(group, members, state) {
+  const memberOptions = memberOptionsHtml(members, state.initial.paidBy);
 
   const currencyOptions = CURRENCIES.map(
     (c) =>
@@ -169,7 +184,10 @@ function formHtml(group, members, state) {
 
         <div>
           <label for="exp-paid-by">Paid by</label>
-          <select class="input-field" id="exp-paid-by">${memberOptions}</select>
+          <div class="row" style="gap: 0.5rem;">
+            <span class="member-dot" id="paid-by-dot" style="background:${dotColor(memberById(members, state.initial.paidBy)?.color)};"></span>
+            <select class="input-field" id="exp-paid-by" style="flex: 1;">${memberOptions}</select>
+          </div>
         </div>
 
         <div id="split-section"></div>
@@ -193,16 +211,14 @@ function formHtml(group, members, state) {
 
 function splitSectionHtml(members, state) {
   if (state.mode === "payment") {
-    const recipientOptions = members
-      .map(
-        (m) =>
-          `<option value="${m.id}"${m.id === state.forMemberId ? " selected" : ""}>${escapeHtml(m.name)}</option>`
-      )
-      .join("");
+    const recipientOptions = memberOptionsHtml(members, state.forMemberId);
     return `
       <div>
         <label for="exp-for">For</label>
-        <select class="input-field" id="exp-for">${recipientOptions}</select>
+        <div class="row" style="gap: 0.5rem;">
+          <span class="member-dot" id="for-dot" style="background:${dotColor(memberById(members, state.forMemberId)?.color)};"></span>
+          <select class="input-field" id="exp-for" style="flex: 1;">${recipientOptions}</select>
+        </div>
         <p class="muted" style="margin: 0.4rem 0 0;">
           Whoever you picked above fronted the money; this records the whole amount as paid back to the person selected here.
         </p>
@@ -233,7 +249,7 @@ function splitSectionHtml(members, state) {
         <div class="row-between">
           <label style="display: flex; align-items: center; gap: 0.5rem; margin: 0; text-transform: none; font-weight: 400; font-size: 1rem; color: var(--ink);">
             <input type="checkbox" data-member-checkbox="${m.id}" ${checked} />
-            ${escapeHtml(m.name)}
+            ${memberDotHtml(m.color)}${escapeHtml(m.name)}
           </label>
           ${customInput}
         </div>
@@ -268,6 +284,14 @@ function wireForm(mountEl, group, members, state) {
   }
 
   function wireSplitSection() {
+    if (state.mode === "payment") {
+      const forSelect = splitSection.querySelector("#exp-for");
+      const forDot = splitSection.querySelector("#for-dot");
+      forSelect.addEventListener("change", () => {
+        forDot.style.background = dotColor(memberById(members, forSelect.value)?.color);
+      });
+    }
+
     if (state.mode === "expense") {
       splitSection.querySelectorAll("[data-split-type]").forEach((btn) => {
         btn.addEventListener("click", () => {
@@ -324,6 +348,12 @@ function wireForm(mountEl, group, members, state) {
   });
 
   mountEl.querySelector("#exp-amount").addEventListener("input", updateRemaining);
+
+  const paidBySelect = mountEl.querySelector("#exp-paid-by");
+  const paidByDot = mountEl.querySelector("#paid-by-dot");
+  paidBySelect.addEventListener("change", () => {
+    paidByDot.style.background = dotColor(memberById(members, paidBySelect.value)?.color);
+  });
 
   renderSplitSection();
 

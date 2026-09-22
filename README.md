@@ -27,7 +27,7 @@ js/money.js             pure split/rounding math (no DOM, no network)
 js/balances.js           pure balance + settle-up math
 js/router.js            minimal hash router (#/g/<id>, #/g/<id>/add, ...)
 js/views/                one file per screen
-sql/                    run these three files, in order, in the Supabase SQL Editor
+sql/                    run these files, in order, in the Supabase SQL Editor
 ```
 
 ## Local development

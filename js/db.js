@@ -75,25 +75,28 @@ export async function updateGroupName(groupId, token, name) {
 // --- members ---
 
 export async function listMembers(groupId, token) {
-  return request(`/members?group_id=eq.${groupId}&select=id,name&order=name.asc`, { token });
+  return request(`/members?group_id=eq.${groupId}&select=id,name,color&order=name.asc`, {
+    token,
+  });
 }
 
-export async function addMember(groupId, token, name) {
+export async function addMember(groupId, token, name, color) {
   const [row] = await request("/members", {
     method: "POST",
     token,
     prefer: "return=representation",
-    body: { group_id: groupId, name },
+    body: { group_id: groupId, name, color },
   });
   return row;
 }
 
-export async function updateMemberName(memberId, token, name) {
+// patch: any subset of { name, color }.
+export async function updateMember(memberId, token, patch) {
   const [row] = await request(`/members?id=eq.${memberId}`, {
     method: "PATCH",
     token,
     prefer: "return=representation",
-    body: { name },
+    body: patch,
   });
   return row;
 }

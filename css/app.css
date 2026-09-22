@@ -125,3 +125,36 @@ main.container {
   padding-bottom: 0;
   border-bottom: none;
 }
+
+/* A member's personal color, shown next to their name wherever it
+   appears as plain text (see js/colors.js -- memberDotHtml). */
+.member-dot {
+  display: inline-block;
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+  margin-right: 0.4rem;
+  flex-shrink: 0;
+  vertical-align: middle;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
+}
+
+.color-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.color-swatch {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
+}
+
+.color-swatch[aria-pressed="true"] {
+  border-color: var(--ink);
+}

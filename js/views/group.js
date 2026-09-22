@@ -4,7 +4,7 @@ import {
   updateGroupName,
   listMembers,
   addMember,
-  updateMemberName,
+  updateMember,
   deleteMember,
   listExpenses,
   listExpenseShares,
@@ -14,6 +14,7 @@ import { getSavedGroup, saveGroup, removeSavedGroup } from "../storage.js";
 import { escapeHtml } from "../util.js";
 import { formatMoney } from "../money.js";
 import { computeBalances, settleUp } from "../balances.js";
+import { MEMBER_COLORS, nextAvailableColor, memberDotHtml, contrastTextColor } from "../colors.js";
 
 export async function renderGroup(mountEl, { id }) {
   const saved = getSavedGroup(id);
@@ -129,9 +130,12 @@ function renderGroupPage(mountEl, group, members, expenses, shares) {
       <div class="card stack-sm">
         <strong>Members</strong>
         <div id="member-list" class="stack-sm">${membersHtml(members)}</div>
-        <div class="row" style="margin-top: 0.5rem;">
-          <input class="input-field" id="new-member-name" placeholder="Add a member's name" />
-          <button class="btn btn-secondary" id="add-member-btn">Add</button>
+        <div class="stack-sm" style="margin-top: 0.5rem;">
+          <div class="row">
+            <input class="input-field" id="new-member-name" placeholder="Add a member's name" />
+            <button class="btn btn-secondary" id="add-member-btn">Add</button>
+          </div>
+          ${colorSwatchesHtml("add-member", nextAvailableColor(members))}
         </div>
         <p id="member-error" class="form-error"></p>
       </div>
@@ -143,7 +147,7 @@ function renderGroupPage(mountEl, group, members, expenses, shares) {
 
       <div class="card stack-sm">
         <strong>Settle Up</strong>
-        <div class="stack-sm">${settleUpHtml(payments, group.baseCurrency)}</div>
+        <div class="stack-sm">${settleUpHtml(payments, group.baseCurrency, members)}</div>
       </div>
 
       <div class="card stack-sm">
@@ -233,15 +237,20 @@ function balanceRowHtml(b, baseCurrency) {
   `;
 }
 
-function settleUpHtml(payments, baseCurrency) {
+function settleUpHtml(payments, baseCurrency, members) {
   if (!payments.length) {
     return '<p class="muted">Nothing to settle up.</p>';
   }
+  const colorById = new Map(members.map((m) => [m.id, m.color]));
   return payments
     .map(
       (p) => `
         <div class="row-between">
-          <span>${escapeHtml(p.from)} &rarr; ${escapeHtml(p.to)}</span>
+          <span>
+            ${memberDotHtml(colorById.get(p.fromId))}${escapeHtml(p.from)}
+            &rarr;
+            ${memberDotHtml(colorById.get(p.toId))}${escapeHtml(p.to)}
+          </span>
           <strong>${formatMoney(p.amount, baseCurrency)}</strong>
         </div>
       `
@@ -253,12 +262,12 @@ function expensesHtml(members, expenses, groupId) {
   if (!expenses.length) {
     return '<p class="muted">No expenses yet.</p>';
   }
-  const nameById = new Map(members.map((m) => [m.id, m.name]));
-  return expenses.map((e) => expenseRowHtml(e, nameById, groupId)).join("");
+  const memberById = new Map(members.map((m) => [m.id, m]));
+  return expenses.map((e) => expenseRowHtml(e, memberById, groupId)).join("");
 }
 
-function expenseRowHtml(e, nameById, groupId) {
-  const payer = nameById.get(e.paid_by) ?? "Unknown";
+function expenseRowHtml(e, memberById, groupId) {
+  const payer = memberById.get(e.paid_by);
   const badgeClass = e.kind === "payment" ? "badge-ocean" : "badge-sunset";
   const kindLabel = e.kind === "payment" ? "Payment" : "Expense";
   return `
@@ -266,7 +275,9 @@ function expenseRowHtml(e, nameById, groupId) {
       <div class="row-between">
         <div>
           <strong>${escapeHtml(e.title)}</strong>
-          <div class="muted">${escapeHtml(payer)} paid &middot; ${e.spent_on}</div>
+          <div class="muted">
+            ${memberDotHtml(payer?.color)}${escapeHtml(payer?.name ?? "Unknown")} paid &middot; ${e.spent_on}
+          </div>
         </div>
         <div style="text-align: right;">
           <div>${formatMoney(Number(e.amount), e.currency)}</div>
@@ -287,9 +298,12 @@ function membersHtml(members) {
 }
 
 function memberRowHtml(m) {
+  const badgeStyle = m.color
+    ? ` style="background:#${m.color}; color:${contrastTextColor(m.color)};"`
+    : "";
   return `
     <div class="member-row" data-member-row="${m.id}">
-      <span class="badge badge-ocean">${escapeHtml(m.name)}</span>
+      <span class="badge${m.color ? "" : " badge-ocean"}"${badgeStyle}>${escapeHtml(m.name)}</span>
       <button class="btn btn-ghost btn-sm" data-edit="${m.id}">Edit</button>
       <button class="btn btn-ghost btn-sm" data-remove="${m.id}">Remove</button>
     </div>
@@ -298,10 +312,32 @@ function memberRowHtml(m) {
 
 function memberEditRowHtml(m) {
   return `
-    <div class="member-row" data-member-row="${m.id}">
-      <input class="input-field" data-member-name-input value="${escapeHtml(m.name)}" style="flex: 1;" />
-      <button class="btn btn-primary btn-sm" data-save-member="${m.id}">Save</button>
-      <button class="btn btn-ghost btn-sm" data-cancel-member="${m.id}">Cancel</button>
+    <div class="member-row stack-sm" data-member-row="${m.id}" style="flex-direction: column; align-items: stretch;">
+      <div class="row">
+        <input class="input-field" data-member-name-input value="${escapeHtml(m.name)}" style="flex: 1;" />
+        <button class="btn btn-primary btn-sm" data-save-member="${m.id}">Save</button>
+        <button class="btn btn-ghost btn-sm" data-cancel-member="${m.id}">Cancel</button>
+      </div>
+      ${colorSwatchesHtml(`edit-member-${m.id}`, m.color ?? MEMBER_COLORS[0])}
+    </div>
+  `;
+}
+
+// A row of clickable color-swatch circles for `groupKey`. The currently
+// selected color is tracked in the container's own dataset (read back at
+// add/save time) rather than in JS state, since these rows are rebuilt
+// wholesale on every render.
+function colorSwatchesHtml(groupKey, selectedColor) {
+  const swatches = MEMBER_COLORS.map(
+    (c) => `
+      <button type="button" class="color-swatch" data-color-swatch="${c}"
+              aria-pressed="${c === selectedColor}" style="background:#${c};"
+              aria-label="Color ${c}"></button>
+    `
+  ).join("");
+  return `
+    <div class="color-swatches" data-swatch-group="${groupKey}" data-selected-color="${selectedColor}">
+      ${swatches}
     </div>
   `;
 }
@@ -311,24 +347,42 @@ function wireMemberList(mountEl, group, members) {
   const input = mountEl.querySelector("#new-member-name");
   const addBtn = mountEl.querySelector("#add-member-btn");
   const errorEl = mountEl.querySelector("#member-error");
+  let addSwatchGroup = mountEl.querySelector('[data-swatch-group="add-member"]');
 
   const renderList = () => {
     listEl.innerHTML = membersHtml(members);
   };
 
+  // Delegated on mountEl (not listEl) since the add-member swatches live
+  // outside the member list, alongside per-member edit-row swatches
+  // inside it -- one listener covers both.
+  mountEl.addEventListener("click", (e) => {
+    const swatchBtn = e.target.closest("[data-color-swatch]");
+    if (!swatchBtn) return;
+    const container = swatchBtn.closest("[data-swatch-group]");
+    container.dataset.selectedColor = swatchBtn.dataset.colorSwatch;
+    container.querySelectorAll("[data-color-swatch]").forEach((b) => {
+      b.setAttribute("aria-pressed", String(b === swatchBtn));
+    });
+  });
+
   const addMemberHandler = async () => {
     const name = input.value.trim();
+    const color = addSwatchGroup.dataset.selectedColor;
     errorEl.textContent = "";
     if (!name) return;
 
     addBtn.disabled = true;
     try {
-      const member = await addMember(group.id, group.token, name);
+      const member = await addMember(group.id, group.token, name, color);
       members.push(member);
       members.sort((a, b) => a.name.localeCompare(b.name));
       renderList();
       input.value = "";
       input.focus();
+      // Re-pick the next unused color for whoever's added next.
+      addSwatchGroup.outerHTML = colorSwatchesHtml("add-member", nextAvailableColor(members));
+      addSwatchGroup = mountEl.querySelector('[data-swatch-group="add-member"]');
     } catch (err) {
       console.error(err);
       errorEl.textContent = "Couldn't add that member (maybe that name is already used?).";
@@ -374,20 +428,22 @@ function wireMemberList(mountEl, group, members) {
       const member = members.find((m) => m.id === memberId);
       const rowEl = listEl.querySelector(`[data-member-row="${memberId}"]`);
       const input = rowEl.querySelector("[data-member-name-input]");
+      const swatchGroup = rowEl.querySelector("[data-swatch-group]");
       const name = input.value.trim();
+      const color = swatchGroup.dataset.selectedColor;
       if (!name) return;
-      if (name === member.name) {
+      if (name === member.name && color === member.color) {
         renderList();
         return;
       }
 
       saveBtn.disabled = true;
       try {
-        await updateMemberName(memberId, group.token, name);
+        await updateMember(memberId, group.token, { name, color });
         renderGroup(mountEl, { id: group.id });
       } catch (err) {
         console.error(err);
-        errorEl.textContent = "Couldn't rename that member (maybe that name is already used?).";
+        errorEl.textContent = "Couldn't save that member (maybe that name is already used?).";
         saveBtn.disabled = false;
       }
       return;
