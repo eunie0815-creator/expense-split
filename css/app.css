@@ -161,6 +161,57 @@ main.container {
   color: var(--sunset-strong);
 }
 
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  cursor: pointer;
+  user-select: none;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ink-secondary);
+}
+
+.switch input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+
+.switch-track {
+  position: relative;
+  width: 2.1rem;
+  height: 1.2rem;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--line);
+  transition: background 0.15s ease;
+}
+
+.switch-thumb {
+  position: absolute;
+  top: 0.15rem;
+  left: 0.15rem;
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 50%;
+  background: var(--surface);
+  transition: transform 0.15s ease;
+}
+
+.switch input:checked + .switch-track {
+  background: var(--ocean);
+}
+.switch input:checked + .switch-track .switch-thumb {
+  transform: translateX(0.9rem);
+}
+.switch input:focus-visible + .switch-track {
+  outline: 2px solid var(--ocean);
+  outline-offset: 2px;
+}
+
 .expense-row {
   padding-bottom: 0.6rem;
   border-bottom: 1px solid var(--line);

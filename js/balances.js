@@ -74,3 +74,58 @@ export function settleUp(balances) {
 
   return payments;
 }
+
+// The "unsimplified" alternative to settleUp(): every expense/payment
+// creates a direct debt from each non-payer participant to that
+// expense's payer -- a payment is just an expense with one participant
+// sharing the whole amount, so the same rule covers both (see the file
+// comment above). Two people's debts to each other net against each
+// other, but debts aren't rerouted through a third person the way
+// settleUp()'s min-cash-flow simplification does, so e.g. Sodam still
+// pays Ellie directly even if that could be routed through a third
+// person instead.
+export function computePairwiseDebts(members, expenses, shares) {
+  const nameById = new Map(members.map((m) => [m.id, m.name]));
+  const sharesByExpense = new Map();
+  for (const s of shares) {
+    const list = sharesByExpense.get(s.expense_id);
+    if (list) list.push(s);
+    else sharesByExpense.set(s.expense_id, [s]);
+  }
+
+  // net.get("a|b") (a < b by id) = how much b owes a, minus how much a
+  // owes b. A single signed number per pair is enough since only the
+  // final net between two people is ever shown.
+  const net = new Map();
+  const addDebt = (owerId, owedToId, amount) => {
+    if (owerId === owedToId || !amount) return;
+    const [a, b] = owerId < owedToId ? [owerId, owedToId] : [owedToId, owerId];
+    const sign = owerId === a ? -1 : 1;
+    const key = `${a}|${b}`;
+    net.set(key, (net.get(key) ?? 0) + sign * amount);
+  };
+
+  for (const e of expenses) {
+    for (const s of sharesByExpense.get(e.id) ?? []) {
+      if (s.member_id === e.paid_by) continue;
+      addDebt(s.member_id, e.paid_by, Number(s.share_base));
+    }
+  }
+
+  const debts = [];
+  for (const [key, rawAmount] of net) {
+    const amount = roundToCents(rawAmount);
+    if (Math.abs(amount) < 0.01) continue;
+    const [a, b] = key.split("|");
+    const [fromId, toId] = amount > 0 ? [b, a] : [a, b];
+    debts.push({
+      fromId,
+      toId,
+      from: nameById.get(fromId) ?? "Unknown",
+      to: nameById.get(toId) ?? "Unknown",
+      amount: Math.abs(amount),
+    });
+  }
+
+  return debts.sort((x, y) => y.amount - x.amount);
+}

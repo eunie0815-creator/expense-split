@@ -28,3 +28,23 @@ export function removeSavedGroup(id) {
   const groups = listSavedGroups().filter((g) => g.id !== id);
   localStorage.setItem(KEY, JSON.stringify(groups));
 }
+
+const SIMPLIFY_KEY_PREFIX = "expense-split:simplify-debts:";
+
+// Whether the Settle Up card shows the min-cash-flow simplified
+// suggestions (true, the default) or direct pairwise debts (false).
+// Stored per group so the choice survives a reload.
+export function getSimplifyDebts(groupId) {
+  try {
+    const raw = localStorage.getItem(SIMPLIFY_KEY_PREFIX + groupId);
+    return raw === null ? true : raw === "true";
+  } catch {
+    return true;
+  }
+}
+
+export function setSimplifyDebts(groupId, value) {
+  try {
+    localStorage.setItem(SIMPLIFY_KEY_PREFIX + groupId, String(value));
+  } catch {}
+}

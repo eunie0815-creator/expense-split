@@ -178,7 +178,7 @@ export async function listExpenseShares(expenseIds, token) {
   if (expenseIds.length === 0) return [];
   const idList = expenseIds.join(",");
   return request(
-    `/expense_shares?expense_id=in.(${idList})&select=member_id,share_base`,
+    `/expense_shares?expense_id=in.(${idList})&select=expense_id,member_id,share_base`,
     { token }
   );
 }

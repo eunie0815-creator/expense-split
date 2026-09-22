@@ -10,10 +10,16 @@ import {
   listExpenseShares,
   deleteExpense,
 } from "../db.js";
-import { getSavedGroup, saveGroup, removeSavedGroup } from "../storage.js";
+import {
+  getSavedGroup,
+  saveGroup,
+  removeSavedGroup,
+  getSimplifyDebts,
+  setSimplifyDebts,
+} from "../storage.js";
 import { escapeHtml } from "../util.js";
 import { formatMoney } from "../money.js";
-import { computeBalances, settleUp } from "../balances.js";
+import { computeBalances, settleUp, computePairwiseDebts } from "../balances.js";
 import { MEMBER_COLORS, nextAvailableColor, memberDotHtml, contrastTextColor } from "../colors.js";
 
 export async function renderGroup(mountEl, { id }) {
@@ -102,7 +108,8 @@ function renderUnlockForm(mountEl, id) {
 
 function renderGroupPage(mountEl, group, members, expenses, shares) {
   const balances = computeBalances(members, expenses, shares);
-  const payments = settleUp(balances);
+  const simplify = getSimplifyDebts(group.id);
+  const payments = simplify ? settleUp(balances) : computePairwiseDebts(members, expenses, shares);
 
   mountEl.innerHTML = `
     <div class="stack">
@@ -146,8 +153,15 @@ function renderGroupPage(mountEl, group, members, expenses, shares) {
       </div>
 
       <div class="card stack-sm">
-        <strong>Settle Up</strong>
-        <div class="stack-sm">${settleUpHtml(payments, group.baseCurrency, members)}</div>
+        <div class="row-between">
+          <strong>Settle Up</strong>
+          <label class="switch">
+            <input type="checkbox" id="simplify-toggle" ${simplify ? "checked" : ""} />
+            <span class="switch-track"><span class="switch-thumb"></span></span>
+            Simplify debts
+          </label>
+        </div>
+        <div id="settle-up-content" class="stack-sm">${settleUpHtml(payments, group.baseCurrency, members)}</div>
       </div>
 
       <div class="card stack-sm">
@@ -161,6 +175,20 @@ function renderGroupPage(mountEl, group, members, expenses, shares) {
   wireGroupName(mountEl, group);
   wireMemberList(mountEl, group, members);
   wireExpenseList(mountEl, group);
+  wireSettleUpToggle(mountEl, group, members, expenses, shares);
+}
+
+function wireSettleUpToggle(mountEl, group, members, expenses, shares) {
+  const toggle = mountEl.querySelector("#simplify-toggle");
+  const content = mountEl.querySelector("#settle-up-content");
+
+  toggle.addEventListener("change", () => {
+    setSimplifyDebts(group.id, toggle.checked);
+    const payments = toggle.checked
+      ? settleUp(computeBalances(members, expenses, shares))
+      : computePairwiseDebts(members, expenses, shares);
+    content.innerHTML = settleUpHtml(payments, group.baseCurrency, members);
+  });
 }
 
 function wireGroupName(mountEl, group) {
