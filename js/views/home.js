@@ -2,6 +2,7 @@ import { createGroup } from "../db.js";
 import { listSavedGroups, saveGroup } from "../storage.js";
 import { escapeHtml } from "../util.js";
 import { CURRENCIES } from "../currencies.js";
+import { contrastTextColor } from "../colors.js";
 
 export function renderHome(mountEl) {
   const groups = listSavedGroups();
@@ -20,6 +21,8 @@ export function renderHome(mountEl) {
       </div>
 
       ${createFormHtml()}
+
+      ${memeThreadHtml()}
     </div>
   `;
 
@@ -132,4 +135,33 @@ function wireCreateForm(mountEl) {
       submitBtn.disabled = false;
     }
   });
+}
+
+// A running inside joke for this particular friend group -- not tied to
+// any group's real member data, just decoration. Colors are picked from
+// the same palette members can choose in js/colors.js, for a family
+// resemblance with the rest of the app, but these four are hardcoded.
+const MEME_LINES = [
+  { name: "ellie", text: "but hes rich 💰", color: "F6DE8D", side: "end" },
+  { name: "lucy", text: "but hes tall 🗼", color: "D98E8A", side: "start" },
+  { name: "phoebe", text: "but hes funny 😂", color: "A8C3A0", side: "end" },
+  { name: "sodam", text: "but he's an introvert 🪩", color: "8FAFC4", side: "start" },
+];
+
+function memeThreadHtml() {
+  const bubbles = MEME_LINES.map(
+    (line) => `
+      <div class="chat-bubble chat-bubble--${line.side}"
+           style="background:#${line.color}; color:${contrastTextColor(line.color)};">
+        <strong>${escapeHtml(line.name)}</strong>: ${line.text}
+      </div>
+    `
+  ).join("");
+
+  return `
+    <div class="card chat-thread">
+      <div class="chat-thread__header">restrictions &#128680;</div>
+      <div class="chat-thread__bubbles">${bubbles}</div>
+    </div>
+  `;
 }
