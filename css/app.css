@@ -124,15 +124,41 @@ main.container {
   font-size: 0.85rem;
   line-height: 1;
   padding: 0.3rem;
+  width: 1.6rem;
+  height: 1.6rem;
   border-radius: 50%;
   color: var(--ink-secondary);
+  text-decoration: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 .icon-btn:hover {
   background: var(--ocean-tint);
   color: var(--ocean-strong);
+}
+
+.icon-btn-danger {
+  font-size: 1.1rem;
+}
+.icon-btn-danger:hover {
+  background: var(--sunset-tint);
+  color: var(--sunset-strong);
+}
+
+/* The two-step "are you sure" state: the icon swaps for the word
+   "Confirm?", so the circular icon-btn shape has to widen into a pill
+   to fit it (see the click handlers in group.js). */
+.icon-btn.armed {
+  width: auto;
+  height: auto;
+  border-radius: 999px;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: var(--sunset-tint);
+  color: var(--sunset-strong);
 }
 
 .expense-row {

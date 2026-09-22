@@ -282,9 +282,9 @@ function expenseRowHtml(e, memberById, groupId) {
           <span class="badge ${badgeClass}">${kindLabel}</span>
         </div>
       </div>
-      <div class="row" style="justify-content: flex-end; margin-top: 0.4rem;">
-        <a class="btn btn-ghost btn-sm" href="#/g/${groupId}/edit/${e.id}">Edit</a>
-        <button class="btn btn-ghost btn-sm" data-delete-expense="${e.id}">Delete</button>
+      <div class="row" style="justify-content: flex-end; margin-top: 0.4rem; gap: 0.4rem;">
+        <a class="icon-btn" href="#/g/${groupId}/edit/${e.id}" aria-label="Edit expense" title="Edit">&#9998;</a>
+        <button class="icon-btn icon-btn-danger" data-delete-expense="${e.id}" aria-label="Delete expense" title="Delete">&times;</button>
       </div>
     </div>
   `;
@@ -303,8 +303,8 @@ function memberRowHtml(m) {
     <div class="member-row" data-member-row="${m.id}">
       <span class="badge${m.color ? "" : " badge-ocean"}"${badgeStyle}>${escapeHtml(m.name)}</span>
       <div class="row" style="gap: 0.4rem;">
-        <button class="btn btn-ghost btn-sm" data-edit="${m.id}">Edit</button>
-        <button class="btn btn-ghost btn-sm" data-remove="${m.id}">Remove</button>
+        <button class="icon-btn" data-edit="${m.id}" aria-label="Edit ${escapeHtml(m.name)}" title="Edit">&#9998;</button>
+        <button class="icon-btn icon-btn-danger" data-remove="${m.id}" aria-label="Remove ${escapeHtml(m.name)}" title="Remove">&times;</button>
       </div>
     </div>
   `;
@@ -455,6 +455,7 @@ function wireMemberList(mountEl, group, members) {
 
     if (btn.dataset.armed !== "true") {
       btn.dataset.armed = "true";
+      btn.classList.add("armed");
       btn.textContent = "Confirm?";
       return;
     }
@@ -470,7 +471,8 @@ function wireMemberList(mountEl, group, members) {
       console.error(err);
       errorEl.textContent = "Couldn't remove that member -- they may already have expenses recorded.";
       btn.disabled = false;
-      btn.textContent = "Remove";
+      btn.classList.remove("armed");
+      btn.textContent = "×";
       btn.dataset.armed = "false";
     }
   });
@@ -501,6 +503,7 @@ function wireExpenseList(mountEl, group) {
 
     if (btn.dataset.armed !== "true") {
       btn.dataset.armed = "true";
+      btn.classList.add("armed");
       btn.textContent = "Confirm?";
       return;
     }
@@ -514,7 +517,8 @@ function wireExpenseList(mountEl, group) {
       console.error(err);
       errorEl.textContent = "Couldn't delete that expense. Try again.";
       btn.disabled = false;
-      btn.textContent = "Delete";
+      btn.classList.remove("armed");
+      btn.textContent = "×";
       btn.dataset.armed = "false";
     }
   });
