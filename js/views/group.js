@@ -128,10 +128,12 @@ function renderGroupPage(mountEl, group, members, expenses, shares) {
       <div class="card stack-sm">
         <strong>Members</strong>
         <div id="member-list" class="stack-sm">${membersHtml(members)}</div>
-        <div class="stack-sm" style="margin-top: 0.5rem;">
+        <button class="btn btn-ghost btn-sm" id="new-member-btn" style="margin-top: 0.5rem;">+ New Member</button>
+        <div id="new-member-form" class="stack-sm" style="margin-top: 0.5rem;" hidden>
           <div class="row">
             <input class="input-field" id="new-member-name" placeholder="Add a member's name" />
             <button class="btn btn-secondary" id="add-member-btn">Add</button>
+            <button class="icon-btn" id="cancel-new-member-btn" aria-label="Close" title="Close">&times;</button>
           </div>
           ${colorSwatchesHtml("add-member", nextAvailableColor(members))}
         </div>
@@ -347,11 +349,27 @@ function wireMemberList(mountEl, group, members) {
   const input = mountEl.querySelector("#new-member-name");
   const addBtn = mountEl.querySelector("#add-member-btn");
   const errorEl = mountEl.querySelector("#member-error");
+  const newMemberBtn = mountEl.querySelector("#new-member-btn");
+  const newMemberForm = mountEl.querySelector("#new-member-form");
+  const cancelNewMemberBtn = mountEl.querySelector("#cancel-new-member-btn");
   let addSwatchGroup = mountEl.querySelector('[data-swatch-group="add-member"]');
 
   const renderList = () => {
     listEl.innerHTML = membersHtml(members);
   };
+
+  newMemberBtn.addEventListener("click", () => {
+    newMemberBtn.hidden = true;
+    newMemberForm.hidden = false;
+    input.focus();
+  });
+
+  cancelNewMemberBtn.addEventListener("click", () => {
+    errorEl.textContent = "";
+    input.value = "";
+    newMemberForm.hidden = true;
+    newMemberBtn.hidden = false;
+  });
 
   // Delegated on mountEl (not listEl) since the add-member swatches live
   // outside the member list, alongside per-member edit-row swatches
@@ -394,6 +412,7 @@ function wireMemberList(mountEl, group, members) {
   addBtn.addEventListener("click", addMemberHandler);
   input.addEventListener("keydown", (e) => {
     if (e.key === "Enter") addMemberHandler();
+    if (e.key === "Escape") cancelNewMemberBtn.click();
   });
 
   // Two-step remove: first click arms it ("Confirm?"), second click
