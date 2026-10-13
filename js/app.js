@@ -4,8 +4,10 @@ import { renderHome } from "./views/home.js";
 import { renderGroup } from "./views/group.js";
 import { renderAddExpense, renderEditExpense } from "./views/expense.js";
 import { renderAllExpenses } from "./views/all-expenses.js";
+import { mascotHtml } from "./mascot.js";
 
 initThemeToggle(document.getElementById("theme-toggle-btn"));
+document.getElementById("header-mascot").innerHTML = mascotHtml({ mood: "idle", size: 26 });
 
 initRouter(
   [

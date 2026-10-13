@@ -21,6 +21,7 @@ import { formatMoney } from "../money.js";
 import { computeBalances, settleUp, computePairwiseDebts } from "../balances.js";
 import { MEMBER_COLORS, nextAvailableColor, memberDotHtml, contrastTextColor } from "../colors.js";
 import { expensesHtml, wireExpenseList } from "./expense-list.js";
+import { mascotHtml, loadingHtml } from "../mascot.js";
 
 const RECENT_EXPENSES_LIMIT = 4;
 
@@ -32,7 +33,7 @@ export async function renderGroup(mountEl, { id }) {
     return;
   }
 
-  mountEl.innerHTML = `<p class="center-note">Loading&hellip;</p>`;
+  mountEl.innerHTML = loadingHtml();
 
   try {
     const group = await getGroup(id, saved.token);
@@ -274,7 +275,12 @@ function balanceRowHtml(b, baseCurrency) {
 
 function settleUpHtml(payments, baseCurrency, members) {
   if (!payments.length) {
-    return '<p class="muted">Nothing to settle up.</p>';
+    return `
+      <div class="row" style="gap: 0.6rem;">
+        ${mascotHtml({ mood: "happy", size: 40 })}
+        <p class="muted" style="margin: 0;">All settled up! Nothing to pay.</p>
+      </div>
+    `;
   }
   const colorById = new Map(members.map((m) => [m.id, m.color]));
   return payments

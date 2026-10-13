@@ -3,6 +3,7 @@ import { listSavedGroups, saveGroup } from "../storage.js";
 import { escapeHtml } from "../util.js";
 import { CURRENCIES } from "../currencies.js";
 import { contrastTextColor } from "../colors.js";
+import { mascotHtml } from "../mascot.js";
 
 export function renderHome(mountEl) {
   const groups = listSavedGroups();
@@ -37,9 +38,10 @@ export function renderHome(mountEl) {
 
 function emptyStateHtml() {
   return `
-    <p class="center-note">
-      No groups yet. Create one, or open a link a friend shared with you.
-    </p>
+    <div class="center-note" style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+      ${mascotHtml({ mood: "sad", size: 48 })}
+      <p style="margin: 0;">No groups yet. Create one, or open a link a friend shared with you.</p>
+    </div>
   `;
 }
 

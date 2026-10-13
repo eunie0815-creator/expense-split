@@ -6,6 +6,7 @@ import { getGroup, listMembers, listExpenses } from "../db.js";
 import { getSavedGroup, removeSavedGroup } from "../storage.js";
 import { escapeHtml } from "../util.js";
 import { expensesHtml, wireExpenseList } from "./expense-list.js";
+import { loadingHtml } from "../mascot.js";
 
 export async function renderAllExpenses(mountEl, { id }) {
   const saved = getSavedGroup(id);
@@ -15,7 +16,7 @@ export async function renderAllExpenses(mountEl, { id }) {
     return;
   }
 
-  mountEl.innerHTML = `<p class="center-note">Loading&hellip;</p>`;
+  mountEl.innerHTML = loadingHtml();
 
   try {
     const group = await getGroup(id, saved.token);

@@ -15,6 +15,7 @@ import { getSavedGroup } from "../storage.js";
 import { escapeHtml } from "../util.js";
 import { CURRENCIES } from "../currencies.js";
 import { memberDotHtml } from "../colors.js";
+import { loadingHtml } from "../mascot.js";
 
 export async function renderAddExpense(mountEl, { id }) {
   return renderExpenseForm(mountEl, { id, expenseId: null });
@@ -31,7 +32,7 @@ async function renderExpenseForm(mountEl, { id, expenseId }) {
     return;
   }
 
-  mountEl.innerHTML = `<p class="center-note">Loading&hellip;</p>`;
+  mountEl.innerHTML = loadingHtml();
 
   let group, members, existing, existingShares;
   try {
